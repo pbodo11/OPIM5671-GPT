@@ -80,7 +80,7 @@ def ask_OPIM5671_gpt(question, k=3):
             {"role": "system", "content": prompt},
             {"role": "user", "content": question}
         ],
-        model="mistral-8x7b-32768",
+        model="mixtral-8x7b-32768",
         temperature=0.1,
     )
     

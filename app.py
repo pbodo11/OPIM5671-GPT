@@ -56,17 +56,21 @@ all_chunks, index, embed_model = load_knowledge_base()
 # 3. The RAG Search & Generation Function
 # ---------------------------------------------------------
 def ask_OPIM5671_gpt(question, k=3):
-    # Search the vector database
+    # 1. Search the vector database
     query_vec = embed_model.encode([question])
     distances, indices = index.search(np.array(query_vec).astype('float32'), k=k)
 
-    # Gather the text
+    # 2. Gather the text
     retrieved_text = ""
     for i in indices[0]:
-        chunk = all_chunks[i].replace("_", " ").replace("$", "")
+        # Force it to be a string just in case, and clean it up
+        chunk = str(all_chunks[i]).replace("_", " ").replace("$", "")
         retrieved_text += f"\n---\n{chunk}\n"
+        
+    # SAFETY SHIELD: Cap the context at 15,000 characters so it never crashes Groq
+    retrieved_text = retrieved_text[:15000]
 
-    # Build the prompt
+    # 3. Build the prompt
     prompt = (
         f"You are a rigorous but supportive Teaching Assistant "
         f"for an MBA-level Data Mining and Time Series Forecasting class. "
@@ -74,18 +78,19 @@ def ask_OPIM5671_gpt(question, k=3):
         f"NOTES: {retrieved_text}"
     )
 
-    # Send to Groq for lightning-fast generation
+    # 4. Send to Groq for lightning-fast generation
     chat_completion = client.chat.completions.create(
         messages=[
             {"role": "system", "content": prompt},
             {"role": "user", "content": question}
         ],
-        model="mixtral-8x7b-32768",
+        model="llama3-70b-8192", # Switched to a robust, highly-available Llama 3 model
         temperature=0.1,
+        max_tokens=1000, # Guarantee we don't hit an output limit
     )
     
     return chat_completion.choices[0].message.content
-
+    
 # ---------------------------------------------------------
 # 4. Streamlit Chat Interface
 # ---------------------------------------------------------

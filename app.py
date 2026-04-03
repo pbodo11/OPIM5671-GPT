@@ -21,15 +21,21 @@ client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 # ---------------------------------------------------------
 @st.cache_resource
 def load_knowledge_base():
-    # Make sure this .pkl file is in the same folder as app.py
+    # 1. Load the data, but ignore the broken Pickled FAISS index
     with open('OPIM5671_gpt_knowledge_base.pkl', 'rb') as f:
-        all_chunks, index = pickle.load(f)
-    
-    # Load the embedding model (runs fine on Streamlit's CPU)
-    embed_model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
-    return all_chunks, index, embed_model
+        data = pickle.load(f)
+        all_chunks = data[0]  # We only want the text chunks!
 
-all_chunks, index, embed_model = load_knowledge_base()
+    # 2. Load the embedding model
+    embed_model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
+
+    # 3. REBUILD THE FAISS INDEX (Takes ~10 seconds on startup)
+    embeddings = embed_model.encode(all_chunks)
+    dimension = embeddings.shape[1]
+    index = faiss.IndexFlatL2(dimension)
+    index.add(np.array(embeddings).astype('float32'))
+
+    return all_chunks, index, embed_model
 
 # ---------------------------------------------------------
 # 3. The RAG Search & Generation Function

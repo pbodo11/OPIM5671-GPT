@@ -36,6 +36,8 @@ def load_knowledge_base():
     index.add(np.array(embeddings).astype('float32'))
 
     return all_chunks, index, embed_model
+    
+all_chunks, index, embed_model = load_knowledge_base()
 
 # ---------------------------------------------------------
 # 3. The RAG Search & Generation Function

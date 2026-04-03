@@ -53,33 +53,46 @@ def load_knowledge_base():
 all_chunks, index, embed_model = load_knowledge_base()
 
 # ---------------------------------------------------------
-# 3. The RAG Search & Generation Function (DIAGNOSTIC MODE)
+# 3. The RAG Search & Generation Function (FINAL VERSION)
 # ---------------------------------------------------------
 def ask_OPIM5671_gpt(question, k=3):
     try:
-        # 1. Search the vector database (Just to make sure this part doesn't crash)
+        # 1. Search the vector database
         query_vec = embed_model.encode([question])
         distances, indices = index.search(np.array(query_vec).astype('float32'), k=k)
 
-        # 2. Bypass the heavy text for a moment
-        prompt = "You are a helpful test assistant. Ignore the user's question and just reply: 'The API is working flawlessly!'"
+        # 2. Gather the text
+        retrieved_text = ""
+        for i in indices[0]:
+            chunk = str(all_chunks[i]).replace("_", " ").replace("$", "")
+            retrieved_text += f"\n---\n{chunk}\n"
+            
+        # SAFETY SHIELD: Cap at 15,000 characters
+        retrieved_text = retrieved_text[:15000]
 
-        # 3. Send a tiny, incredibly safe request to Groq
+        # 3. Build the prompt
+        prompt = (
+            f"You are a rigorous but supportive Teaching Assistant "
+            f"for an MBA-level Data Mining and Time Series Forecasting class. "
+            f"Your goal is to answer students' questions based on your knowledge base. \n\n"
+            f"NOTES: {retrieved_text}"
+        )
+
+        # 4. Send to Groq using their newest active model!
         chat_completion = client.chat.completions.create(
             messages=[
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": question}
             ],
-            model="llama3-8b-8192", # The smallest, fastest model
+            model="llama-3.3-70b-versatile", # The brand new, supported model!
             temperature=0.1,
-            max_tokens=100, 
+            max_tokens=1000, 
         )
         
         return chat_completion.choices[0].message.content
         
     except Exception as e:
-        # If Groq crashes, this will print the REAL error directly into your chat window!
-        return f"🚨 **GROQ API ERROR:** {str(e)}"
+        return f"🚨 **API ERROR:** {str(e)}"
     
 # ---------------------------------------------------------
 # 4. Streamlit Chat Interface

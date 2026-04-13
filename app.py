@@ -87,7 +87,7 @@ def ask_OPIM5671_gpt(question, k=3):
             ### IMAGE DISPLAY RULES:
             f"1. You DO have the ability to display images to the user."
             f"2. If the provided context contains an "ASSOCIATED IMAGES:" section with a Markdown image link (e.g., ![Image Name](knowledge_base_images/...)), you MUST include that exact Markdown link in your final response."
-            f"3. NEVER say "I cannot display images" or "I don't have the capability to display images." 
+            f"3. NEVER say 'I cannot display images' or 'I don't have the capability to display images'." 
             f"4. Always place the image link on its own line after you explain the concept.  \n\n"
           
             f"NOTES: {retrieved_text}"

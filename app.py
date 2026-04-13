@@ -89,6 +89,7 @@ def ask_OPIM5671_gpt(question, k=3):
         2. If the provided context contains an "ASSOCIATED IMAGES:" section with a Markdown image link (e.g., ![Image Name](knowledge_base_images/...)), you MUST include that exact Markdown link in your final response.
         3. NEVER say 'I cannot display images' or 'I don't have the capability to display images'.
         4. Always place the image link on its own line after you explain the concept.
+        5. CRITICAL: DO NOT invent, guess, or hallucinate image links. ONLY output a markdown image link if it explicitly exists in the retrieved NOTES provided below.
 
 NOTES:
 {retrieved_text}
@@ -126,11 +127,14 @@ for message in st.session_state.messages:
             clean_text = re.sub(r'!\[[^\]]*\]\((.*?\.(?:png|jpg|jpeg|gif))\)', '', message["content"], flags=re.IGNORECASE)
             
             st.markdown(clean_text)
+            
+            # Draw the images (but only if they actually exist!)
             for img_path in image_paths:
-                try:
+                if os.path.exists(img_path):
                     st.image(img_path)
-                except Exception as e:
-                    st.error(f"⚠️ Missing image: {img_path}")
+                else:
+                    # The AI hallucinated a fake link, so we quietly ignore it
+                    pass
         else:
             st.markdown(message["content"])
 
@@ -154,12 +158,13 @@ if user_prompt := st.chat_input("Ask a question about Data Mining or Time Series
             # Print the clean text
             st.markdown(clean_text)
             
-            # Draw the images!
+            # Draw the images (but only if they actually exist!)
             for img_path in image_paths:
-                try:
+                if os.path.exists(img_path):
                     st.image(img_path)
-                except Exception as e:
-                    st.error(f"⚠️ Missing image: {img_path}")
+                else:
+                    # The AI hallucinated a fake link, so we quietly ignore it
+                    pass
             
             # Save the raw answer (with the links intact) to history
             st.session_state.messages.append({"role": "assistant", "content": answer})

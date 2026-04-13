@@ -79,8 +79,11 @@ def ask_OPIM5671_gpt(question, k=3):
             ### MANDATORY MATH FORMATTING:
             f"1. You must NEVER use inline math (single dollar signs) for statistical formulas."
             f"2. Every time you write an equation, you MUST wrap it in double dollar signs ($$ ... $$) so it displays on its own centered block."
-            f"3. If an equation is long or has multiple steps, you MUST use the \begin{{aligned}} ... \end{{aligned}} environment inside the double dollar signs to break it into multiple, neatly stacked rows. \n\n"
-            
+            f"3. If an equation is long or has multiple steps, you MUST use the \begin{{aligned}} ... \end{{aligned}} environment inside the double dollar signs to break it into multiple, neatly stacked rows."
+            f"4. NEVER restate or repeat an identical expression on a new line."
+            f"5. Do not add redundant parentheses or alternative syntaxes for the same equation."
+            f"6. Always add the description of the terms to your output.  \n\n"
+          
             f"NOTES: {retrieved_text}"
         )
 

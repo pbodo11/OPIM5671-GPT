@@ -1,5 +1,5 @@
 import os
-import re  # ADDED: To parse the text for image links
+import re
 import streamlit as st
 import pickle
 import faiss
@@ -68,7 +68,7 @@ def ask_OPIM5671_gpt(question, k=3):
         # SAFETY SHIELD: Cap at 15,000 characters
         retrieved_text = retrieved_text[:15000]
 
-        # 3. Build the prompt (UPDATED WITH STRICT MATH TEMPLATE)
+        # 3. Build the prompt 
         prompt = f"""You are a rigorous but supportive Teaching Assistant for an MBA-level Data Mining and Time Series Forecasting class. 
         Your goal is to answer students' questions based on your knowledge base.
 
@@ -111,7 +111,7 @@ NOTES:
         return f"🚨 **API ERROR:** {str(e)}"
     
 # ---------------------------------------------------------
-# 4. Streamlit Chat Interface (UPDATED WITH IMAGE RENDERING)
+# 4. Streamlit Chat Interface 
 # ---------------------------------------------------------
 # Store the chat history
 if "messages" not in st.session_state:
@@ -121,9 +121,10 @@ if "messages" not in st.session_state:
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         if message["role"] == "assistant":
-            # Extract and render images for past assistant messages
-            image_paths = re.findall(r'!\[.*?\]\((.*?)\)', message["content"])
-            clean_text = re.sub(r'!\[.*?\]\((.*?)\)', '', message["content"])
+            # Extract and render images using the parenthesis-proof regex
+            image_paths = re.findall(r'!\[[^\]]*\]\((.*?\.(?:png|jpg|jpeg|gif))\)', message["content"], flags=re.IGNORECASE)
+            clean_text = re.sub(r'!\[[^\]]*\]\((.*?\.(?:png|jpg|jpeg|gif))\)', '', message["content"], flags=re.IGNORECASE)
+            
             st.markdown(clean_text)
             for img_path in image_paths:
                 try:
@@ -146,10 +147,9 @@ if user_prompt := st.chat_input("Ask a question about Data Mining or Time Series
         with st.spinner("Searching class materials..."):
             answer = ask_OPIM5671_gpt(user_prompt)
             
-            # Extract image links from the fresh answer
-            image_paths = re.findall(r'!\[.*?\]\((.*?)\)', answer)
-            # Remove the raw markdown links so they don't print as plain text
-            clean_text = re.sub(r'!\[.*?\]\((.*?)\)', '', answer)
+            # Extract image links from the fresh answer using the parenthesis-proof regex
+            image_paths = re.findall(r'!\[[^\]]*\]\((.*?\.(?:png|jpg|jpeg|gif))\)', answer, flags=re.IGNORECASE)
+            clean_text = re.sub(r'!\[[^\]]*\]\((.*?\.(?:png|jpg|jpeg|gif))\)', '', answer, flags=re.IGNORECASE)
             
             # Print the clean text
             st.markdown(clean_text)

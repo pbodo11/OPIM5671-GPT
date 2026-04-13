@@ -10,7 +10,7 @@ from groq import Groq
 # 1. Page Configuration & Setup
 # ---------------------------------------------------------
 st.set_page_config(page_title="OPIM5671 Assistant", page_icon="📊")
-st.title("📊 OPIM5671 Data Mining Assistant")
+st.title("📊 OPIM5671 Data Mining and Time Series Forecasting Assistant")
 st.write("Ask me anything about our MBA Data Analytics course materials!")
 
 # Securely load the Groq API key from Streamlit's secrets

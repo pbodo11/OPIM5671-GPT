@@ -75,6 +75,12 @@ def ask_OPIM5671_gpt(question, k=3):
             f"You are a rigorous but supportive Teaching Assistant "
             f"for an MBA-level Data Mining and Time Series Forecasting class. "
             f"Your goal is to answer students' questions based on your knowledge base. \n\n"
+
+            ### MANDATORY MATH FORMATTING:
+            f"1. You must NEVER use inline math (single dollar signs) for statistical formulas."
+            f"2. Every time you write an equation, you MUST wrap it in double dollar signs ($$ ... $$) so it displays on its own centered block."
+            f"3. If an equation is long or has multiple steps, you MUST use the \begin{aligned} ... \end{aligned} environment inside the double dollar signs to break it into multiple, neatly stacked rows. \n\n"
+            
             f"NOTES: {retrieved_text}"
         )
 

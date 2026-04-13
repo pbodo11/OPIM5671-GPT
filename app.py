@@ -1,4 +1,5 @@
 import os
+import re  # ADDED: To parse the text for image links
 import streamlit as st
 import pickle
 import faiss
@@ -27,13 +28,10 @@ def load_knowledge_base():
 
     # 2. Smartly extract the chunks no matter how they were saved!
     if isinstance(data, list):
-        # If it was saved purely as a list
         all_chunks = data
     elif isinstance(data, tuple):
-        # If it was saved as a tuple
         all_chunks = data[0]
     elif isinstance(data, dict):
-        # If it was saved as a dictionary, find the list inside it
         for key, value in data.items():
             if isinstance(value, list):
                 all_chunks = value
@@ -53,7 +51,7 @@ def load_knowledge_base():
 all_chunks, index, embed_model = load_knowledge_base()
 
 # ---------------------------------------------------------
-# 3. The RAG Search & Generation Function (FINAL VERSION)
+# 3. The RAG Search & Generation Function
 # ---------------------------------------------------------
 def ask_OPIM5671_gpt(question, k=3):
     try:
@@ -70,17 +68,21 @@ def ask_OPIM5671_gpt(question, k=3):
         # SAFETY SHIELD: Cap at 15,000 characters
         retrieved_text = retrieved_text[:15000]
 
-        # 3. Build the prompt
+        # 3. Build the prompt (UPDATED WITH STRICT MATH TEMPLATE)
         prompt = f"""You are a rigorous but supportive Teaching Assistant for an MBA-level Data Mining and Time Series Forecasting class. 
         Your goal is to answer students' questions based on your knowledge base.
 
-        ### MANDATORY MATH FORMATTING:
-        1. You must NEVER use inline math (single dollar signs) for statistical formulas.
-        2. Every time you write an equation, you MUST wrap it in double dollar signs ($$ ... $$) so it displays on its own centered block.
-        3. If an equation is long or has multiple steps, you MUST use the \\begin{{aligned}} ... \\end{{aligned}} environment inside the double dollar signs to break it into multiple, neatly stacked rows.
-        4. NEVER restate or repeat an identical expression on a new line.
-        5. Do not add redundant parentheses or alternative syntaxes for the same equation.
-        6. Always add the description of the terms to your output.
+        ### MATH FORMATTING SCRIPT:
+        When generating mathematical equations, you MUST strictly follow this exact LaTeX template:
+        $$
+        \\begin{{aligned}}
+        [Equation Line 1] \\\\
+        [Equation Line 2] \\\\
+        [Equation Line 3]
+        \\end{{aligned}}
+        $$
+        Do not use single dollar signs. Do not write math as plain text. You must stack every component of an equation neatly on its own line using the double backslash (\\\\) line breaks.
+        Always add the description of the terms to your output.
 
         ### IMAGE DISPLAY RULES:
         1. You DO have the ability to display images to the user.
@@ -92,13 +94,13 @@ NOTES:
 {retrieved_text}
 """
 
-        # 4. Send to Groq using their newest active model!
+        # 4. Send to Groq
         chat_completion = client.chat.completions.create(
             messages=[
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": question}
             ],
-            model="llama-3.3-70b-versatile", # The brand new, supported model!
+            model="llama-3.3-70b-versatile",
             temperature=0.1,
             max_tokens=1000, 
         )
@@ -109,28 +111,55 @@ NOTES:
         return f"🚨 **API ERROR:** {str(e)}"
     
 # ---------------------------------------------------------
-# 4. Streamlit Chat Interface
+# 4. Streamlit Chat Interface (UPDATED WITH IMAGE RENDERING)
 # ---------------------------------------------------------
-# Store the chat history so it doesn't disappear when the page refreshes
+# Store the chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # Display previous chat messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+        if message["role"] == "assistant":
+            # Extract and render images for past assistant messages
+            image_paths = re.findall(r'!\[.*?\]\((.*?)\)', message["content"])
+            clean_text = re.sub(r'!\[.*?\]\((.*?)\)', '', message["content"])
+            st.markdown(clean_text)
+            for img_path in image_paths:
+                try:
+                    st.image(img_path)
+                except Exception as e:
+                    st.error(f"⚠️ Missing image: {img_path}")
+        else:
+            st.markdown(message["content"])
 
 # Capture user input
-if prompt := st.chat_input("Ask a question about Data Mining or Time Series..."):
+if user_prompt := st.chat_input("Ask a question about Data Mining or Time Series..."):
     
     # Show user message
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    st.session_state.messages.append({"role": "user", "content": user_prompt})
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.markdown(user_prompt)
         
     # Generate and show assistant response
     with st.chat_message("assistant"):
         with st.spinner("Searching class materials..."):
-            answer = ask_OPIM5671_gpt(prompt)
-            st.markdown(answer)
+            answer = ask_OPIM5671_gpt(user_prompt)
+            
+            # Extract image links from the fresh answer
+            image_paths = re.findall(r'!\[.*?\]\((.*?)\)', answer)
+            # Remove the raw markdown links so they don't print as plain text
+            clean_text = re.sub(r'!\[.*?\]\((.*?)\)', '', answer)
+            
+            # Print the clean text
+            st.markdown(clean_text)
+            
+            # Draw the images!
+            for img_path in image_paths:
+                try:
+                    st.image(img_path)
+                except Exception as e:
+                    st.error(f"⚠️ Missing image: {img_path}")
+            
+            # Save the raw answer (with the links intact) to history
             st.session_state.messages.append({"role": "assistant", "content": answer})

@@ -144,27 +144,30 @@ if user_prompt := st.chat_input("Ask a question about Data Mining or Time Series
     with st.chat_message("assistant"):
         with st.spinner("Searching class materials..."):
             answer = ask_OPIM5671_gpt(user_prompt)
-
-            # 🛑 TEMPORARILY PRINT THE RAW ANSWER TO SCREEN
-            st.write("--- RAW OUTPUT DEBUG ---")
-            st.text(answer) 
-            st.write("------------------------")
-            '''           
-            # Extract image links from the fresh answer using the parenthesis-proof regex
+            
+            # Extract image links 
+            # (Make sure these backslashes \ are in your code, they might have gotten lost in chat!)
             image_paths = re.findall(r'!\[[^\]]*\]\((.*?\.(?:png|jpg|jpeg|gif))\)', answer, flags=re.IGNORECASE)
             clean_text = re.sub(r'!\[[^\]]*\]\((.*?\.(?:png|jpg|jpeg|gif))\)', '', answer, flags=re.IGNORECASE)
             
             # Print the clean text
             st.markdown(clean_text)
             
-            # Draw the images (but only if they actually exist!)
+            # 🚨 BULLETPROOF PATHING 🚨
+            # 1. Get the exact directory where app.py lives on your computer
+            BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+            
+            # Draw the images
             for img_path in image_paths:
-                if os.path.exists(img_path):
-                    st.image(img_path)
+                # 2. Combine app.py's location with the 'knowledge_base_images/...' string
+                full_absolute_path = os.path.join(BASE_DIR, img_path)
+                
+                # 3. Check the absolute path
+                if os.path.exists(full_absolute_path):
+                    st.image(full_absolute_path)
                 else:
-                    # The AI hallucinated a fake link, so we quietly ignore it
-                    pass
+                    # 4. If it fails, print a yellow warning box showing EXACTLY where it looked
+                    st.warning(f"⚠️ Debug: Python could not find the file at this exact location:\n {full_absolute_path}")
             
             # Save the raw answer (with the links intact) to history
             st.session_state.messages.append({"role": "assistant", "content": answer})
-            '''

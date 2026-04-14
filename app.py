@@ -81,9 +81,11 @@ def ask_OPIM5671_gpt(question, k=3):
         ### IMAGE DISPLAY RULES:
         1. You DO have the ability to display images to the user.
         2. If the provided context contains an "ASSOCIATED IMAGES:" section with a Markdown image link (e.g., ![Image Name](knowledge_base_images/...)), you MUST include that exact Markdown link in your final response.
-        3. NEVER say 'I cannot display images' or 'I don't have the capability to display images'.
-        4. Always place the image link on its own line after you explain the concept.
-        5. CRITICAL: DO NOT invent, guess, or hallucinate image links. ONLY output a markdown image link if it explicitly exists in the retrieved NOTES provided below.
+        3. Always place the image link on its own line after you explain the concept.
+        4. CRITICAL: DO NOT invent, guess, or hallucinate image links. ONLY output a markdown image link if it explicitly exists in the retrieved NOTES provided below.
+        5. CRITICAL DISCLAIMER: You cannot actually see these images. When you output an image link, you MUST add a brief disclaimer acknowledging this. For example: 
+        "Here is an image found on the slide discussing this topic. Because I cannot see the image itself, it may be the architecture diagram you asked for, or it may 
+        be a related graph/equation from the same section."
 
 NOTES:
 {retrieved_text}

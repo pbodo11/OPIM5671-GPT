@@ -149,7 +149,7 @@ if user_prompt := st.chat_input("Ask a question about Data Mining or Time Series
             st.write("--- RAW OUTPUT DEBUG ---")
             st.text(answer) 
             st.write("------------------------")
- '''           
+            '''           
             # Extract image links from the fresh answer using the parenthesis-proof regex
             image_paths = re.findall(r'!\[[^\]]*\]\((.*?\.(?:png|jpg|jpeg|gif))\)', answer, flags=re.IGNORECASE)
             clean_text = re.sub(r'!\[[^\]]*\]\((.*?\.(?:png|jpg|jpeg|gif))\)', '', answer, flags=re.IGNORECASE)
@@ -167,4 +167,4 @@ if user_prompt := st.chat_input("Ask a question about Data Mining or Time Series
             
             # Save the raw answer (with the links intact) to history
             st.session_state.messages.append({"role": "assistant", "content": answer})
-'''
+            '''

@@ -122,12 +122,17 @@ for message in st.session_state.messages:
             
             st.markdown(clean_text)
             
-            # Draw the images (but only if they actually exist!)
-            for img_path in image_paths:
-                if os.path.exists(img_path):
-                    st.image(img_path)
+            # 🚨 APPLY PATHING FIX TO HISTORY TOO 🚨
+            BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+            
+            for raw_img_path in image_paths:
+                # Force spaces back to underscores
+                img_path = raw_img_path.replace(" ", "_")
+                full_absolute_path = os.path.join(BASE_DIR, img_path)
+                
+                if os.path.exists(full_absolute_path):
+                    st.image(full_absolute_path)
                 else:
-                    # The AI hallucinated a fake link, so we quietly ignore it
                     pass
         else:
             st.markdown(message["content"])
@@ -146,7 +151,6 @@ if user_prompt := st.chat_input("Ask a question about Data Mining or Time Series
             answer = ask_OPIM5671_gpt(user_prompt)
             
             # Extract image links 
-            # (Make sure these backslashes \ are in your code, they might have gotten lost in chat!)
             image_paths = re.findall(r'!\[[^\]]*\]\((.*?\.(?:png|jpg|jpeg|gif))\)', answer, flags=re.IGNORECASE)
             clean_text = re.sub(r'!\[[^\]]*\]\((.*?\.(?:png|jpg|jpeg|gif))\)', '', answer, flags=re.IGNORECASE)
             
@@ -154,19 +158,21 @@ if user_prompt := st.chat_input("Ask a question about Data Mining or Time Series
             st.markdown(clean_text)
             
             # 🚨 BULLETPROOF PATHING 🚨
-            # 1. Get the exact directory where app.py lives on your computer
             BASE_DIR = os.path.dirname(os.path.abspath(__file__))
             
             # Draw the images
-            for img_path in image_paths:
-                # 2. Combine app.py's location with the 'knowledge_base_images/...' string
+            for raw_img_path in image_paths:
+                # 🛑 THE SHIELD: Undo the LLM's autocorrect
+                img_path = raw_img_path.replace(" ", "_")
+                
+                # Combine app.py's location with the image path
                 full_absolute_path = os.path.join(BASE_DIR, img_path)
                 
-                # 3. Check the absolute path
+                # Check the absolute path
                 if os.path.exists(full_absolute_path):
                     st.image(full_absolute_path)
                 else:
-                    # 4. If it fails, print a yellow warning box showing EXACTLY where it looked
+                    # If it fails, print a yellow warning box
                     st.warning(f"⚠️ Debug: Python could not find the file at this exact location:\n {full_absolute_path}")
             
             # Save the raw answer (with the links intact) to history

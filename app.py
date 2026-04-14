@@ -22,30 +22,24 @@ client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 # ---------------------------------------------------------
 @st.cache_resource
 def load_knowledge_base():
-    # 1. Load the raw data from the pickle file
+    print("🧠 Loading knowledge base into memory...")
+    
+    # 1. Load the raw dictionary from the pickle file
     with open('OPIM5671_gpt_knowledge_base.pkl', 'rb') as f:
         data = pickle.load(f)
 
-    # 2. Smartly extract the chunks no matter how they were saved!
-    if isinstance(data, list):
-        all_chunks = data
-    elif isinstance(data, tuple):
-        all_chunks = data[0]
-    elif isinstance(data, dict):
-        for key, value in data.items():
-            if isinstance(value, list):
-                all_chunks = value
-                break
+    # 2. Extract the chunks and the pre-built index directly
+    if isinstance(data, dict) and 'chunks' in data and 'index' in data:
+        all_chunks = data['chunks']
+        # Deserialize the FAISS index that you already built!
+        index = faiss.deserialize_index(data['index'])
+    else:
+        raise ValueError("The .pkl file is not in the expected dictionary format with 'chunks' and 'index'.")
 
-    # 3. Load the embedding model
+    # 3. Load the embedding model (only used for embedding the user's short questions now)
     embed_model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
 
-    # 4. REBUILD THE FAISS INDEX
-    embeddings = embed_model.encode(all_chunks)
-    dimension = embeddings.shape[1]
-    index = faiss.IndexFlatL2(dimension)
-    index.add(np.array(embeddings).astype('float32'))
-
+    print(f"✅ Success! Loaded {len(all_chunks)} chunks and the pre-built FAISS index.")
     return all_chunks, index, embed_model
 
 all_chunks, index, embed_model = load_knowledge_base()
